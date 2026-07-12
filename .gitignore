@@ -1,0 +1,10 @@
+.env
+gateway/.env
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local planning artifacts
+superpowers/

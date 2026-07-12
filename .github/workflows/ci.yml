@@ -1,0 +1,82 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install ShellCheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Create dummy environment
+        run: |
+          cp gateway/.env.example gateway/.env
+          sed -i \
+            -e 's|^LITELLM_MASTER_KEY=.*|LITELLM_MASTER_KEY=sk-ci-dummy-1234|' \
+            -e 's|^LITELLM_SALT_KEY=.*|LITELLM_SALT_KEY=sk-salt-ci-dummy|' \
+            -e 's|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=ci-dummy-password|' \
+            -e 's|^UI_USERNAME=.*|UI_USERNAME=ci-dummy-user|' \
+            -e 's|^UI_PASSWORD=.*|UI_PASSWORD=ci-dummy-password|' \
+            -e 's|^GEMINI_API_KEY=.*|GEMINI_API_KEY=ci-dummy|' \
+            -e 's|^ANTHROPIC_API_KEY=.*|ANTHROPIC_API_KEY=ci-dummy|' \
+            -e 's|^OPENAI_API_KEY=.*|OPENAI_API_KEY=ci-dummy|' \
+            gateway/.env
+          if grep -q 'REPLACE-ME' gateway/.env; then
+            echo 'A placeholder remains in gateway/.env' >&2
+            exit 1
+          fi
+
+      - name: Run offline structural proof
+        run: bash scripts/validate.sh
+
+      - name: Boot smoke test
+        run: |
+          set -euo pipefail
+          compose=(docker compose --env-file gateway/.env -f gateway/docker-compose.yml)
+          "${compose[@]}" up -d
+
+          live=false
+          for _ in {1..60}; do
+            if curl -sf http://localhost:4000/health/liveliness >/dev/null; then
+              live=true
+              break
+            fi
+            sleep 2
+          done
+          [[ "$live" == true ]] || { echo 'Liveliness did not reach HTTP 200 within 120 seconds' >&2; exit 1; }
+
+          ready=false
+          for _ in {1..30}; do
+            if curl -sf http://localhost:4000/health/readiness >/dev/null; then
+              ready=true
+              break
+            fi
+            sleep 2
+          done
+          [[ "$ready" == true ]] || { echo 'Readiness did not reach HTTP 200 within 60 seconds' >&2; exit 1; }
+
+          models=$(curl -sf -H 'Authorization: Bearer sk-ci-dummy-1234' http://localhost:4000/v1/models)
+          for group in default default-fallback planning review; do
+            grep -q "\"$group\"" <<<"$models" || { echo "Missing model group: $group" >&2; exit 1; }
+          done
+
+          curl -sf -o /dev/null http://localhost:4000/ui
+
+      - name: Dump failure logs and stop stack
+        if: always()
+        run: |
+          if [[ "${{ job.status }}" == "failure" ]]; then
+            docker compose --env-file gateway/.env -f gateway/docker-compose.yml logs --tail 100 || true
+          fi
+          docker compose --env-file gateway/.env -f gateway/docker-compose.yml down -v || true
