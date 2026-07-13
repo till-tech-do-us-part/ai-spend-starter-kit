@@ -16,13 +16,13 @@ model_list:
   # Lever: routing. Choose this tier for architecture and hard debugging.
   - model_name: planning
     litellm_params:
-      model: gemini/gemini-2.5-pro
+      model: gemini/gemini-3.5-flash
       api_key: os.environ/GEMINI_API_KEY
 
   # Independent-check tier, active by default on the good Gemini model with no separate key.
   - model_name: review
     litellm_params:
-      model: gemini/gemini-2.5-pro
+      model: gemini/gemini-3.5-flash
       api_key: os.environ/GEMINI_API_KEY
 
   # Optional — add a second provider for cross-provider model-diversity review.
