@@ -27,7 +27,7 @@ You need Docker with the Compose plugin, `curl`, `openssl`, and a Gemini API key
    cd ai-spend-starter-kit/gateway
    ```
 
-2. Copy the environment file. Set the four required values: `POSTGRES_PASSWORD`, `LITELLM_MASTER_KEY`, `LITELLM_SALT_KEY`, and `GEMINI_API_KEY`. Everything else is optional; leave provider keys empty until you activate those routes. Gemini powers `default`, its fallback, and `planning`.
+2. Copy the environment file. Set the four required values: `POSTGRES_PASSWORD`, `LITELLM_MASTER_KEY`, `LITELLM_SALT_KEY`, and `GEMINI_API_KEY`. Everything else is optional; keep provider key examples commented unless you use the cross-provider review recipe. Gemini powers `default`, its fallback, `planning`, and `review`.
 
    ```bash
    cp .env.example .env

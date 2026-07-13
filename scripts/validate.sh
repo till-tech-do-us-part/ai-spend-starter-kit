@@ -58,6 +58,23 @@ try:
         == {"default", "default-fallback", "planning", "review"},
         "active model groups must be default, default-fallback, planning, and review",
     )
+    check(
+        all(
+            isinstance(item.get("litellm_params", {}).get("model"), str)
+            and item.get("litellm_params", {}).get("model").startswith("gemini/")
+            for item in models
+        ),
+        "every active model_list entry must use a gemini/ provider model "
+        "(shipping default is Gemini-only; add non-Gemini providers only as commented opt-in recipes)",
+    )
+    check(
+        all(
+            item.get("litellm_params", {}).get("api_key")
+            == "os.environ/GEMINI_API_KEY"
+            for item in models
+        ),
+        "every active model_list entry must use api_key: os.environ/GEMINI_API_KEY",
+    )
     router = config.get("router_settings", {})
     fallbacks = router.get("fallbacks")
     check(isinstance(fallbacks, list), "router_settings.fallbacks must be a list")
