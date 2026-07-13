@@ -25,11 +25,12 @@ The core idea is small: name the job, not the model. Routine work goes to `defau
    cd ai-spend-starter-kit/gateway
    ```
 
-2. Copy the environment file and add your Gemini API key. Generate the three local secrets and choose dashboard credentials too. Gemini powers `default`, its fallback, and `planning`; `review` also needs an Anthropic key.
+2. Copy the environment file. Set the four required values: `POSTGRES_PASSWORD`, `LITELLM_MASTER_KEY`, `LITELLM_SALT_KEY`, and `GEMINI_API_KEY`. Everything else is optional; leave provider keys empty until you activate those routes. Gemini powers `default`, its fallback, and `planning`.
 
    ```bash
    cp .env.example .env
-   # Edit .env. Replace every REPLACE-ME value.
+   openssl rand -hex 16  # Copy this URL-safe value to POSTGRES_PASSWORD.
+   # Edit .env. Replace the four required REPLACE-ME values.
    ```
 
 3. Start the three containers.
@@ -44,7 +45,7 @@ The core idea is small: name the job, not the model. Routine work goes to `defau
    ./verify.sh
    ```
 
-5. Open [http://localhost:4000/ui](http://localhost:4000/ui) and log in with `UI_USERNAME` and `UI_PASSWORD`.
+5. Open [http://localhost:4000/ui](http://localhost:4000/ui). By default, log in as `admin` with `LITELLM_MASTER_KEY`; optional `UI_USERNAME` and `UI_PASSWORD` values override that login.
 
 For the setup details and dashboard tour, read the [gateway guide](gateway/README.md).
 
@@ -67,9 +68,9 @@ A hosted gateway such as OpenRouter can provide one endpoint and model choice wi
 | Problem | Symptom | Likely cause | Fix |
 |---|---|---|---|
 | Docker not running | `docker compose` cannot connect to the daemon | Docker is stopped or missing | Start Docker Desktop or the Docker service, then rerun `docker compose up -d`. |
-| Port 4000 busy | LiteLLM fails to bind `0.0.0.0:4000` | Another process already owns the port | Stop that process or change the host-side port and `LITELLM_BASE_URL` together. |
-| Bad or missing Gemini key | Verify step 1 or 2 returns a provider authentication error | `GEMINI_API_KEY` is absent, still a placeholder, revoked, or restricted | Create a current key in Google AI Studio, update `gateway/.env`, and restart LiteLLM. |
-| Dashboard login | The UI rejects the master key | The UI has separate credentials | Use `UI_USERNAME` and `UI_PASSWORD`, not `LITELLM_MASTER_KEY`. |
+| Port 4000 busy | LiteLLM fails to publish `127.0.0.1:4000` | Another process already owns the port | Stop that process or change the host-side port and `LITELLM_BASE_URL` together. |
+| Bad or missing Gemini key | Verify step 1 or 2 returns a provider authentication error | `GEMINI_API_KEY` is absent, still a placeholder, revoked, or restricted | Create a current key in Google AI Studio, update `gateway/.env`, and run `docker compose up -d litellm` to recreate LiteLLM with the new value. |
+| Dashboard login | The UI rejects the credentials | The default or optional override is wrong | Use `admin` and `LITELLM_MASTER_KEY`, or the optional `UI_USERNAME` and `UI_PASSWORD` overrides. |
 | No cache hit on verify step 3 | The repeat lacks `x-litellm-cache-key` | Redis is unhealthy, caching is disabled, or the request changed | Run `docker compose ps`, inspect Redis logs, and confirm the caching block in `config.yaml`. |
 | Key-generate failure | `POST /key/generate` returns 401, 400, or 5xx | Wrong master key, Postgres is not ready, or alias `verify-script` already exists | Check readiness and `LITELLM_MASTER_KEY`; if rerunning, delete the old `verify-script` key in the dashboard first. |
 | Gateway not up | Curl cannot connect to localhost:4000 | Containers are starting or LiteLLM exited | Run `docker compose ps` and `docker compose logs litellm`; wait for liveliness before retrying. |

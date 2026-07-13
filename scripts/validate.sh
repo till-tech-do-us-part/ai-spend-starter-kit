@@ -9,6 +9,11 @@ fail() {
   exit 1
 }
 
+verify_index=$(git ls-files -s -- gateway/verify.sh)
+[[ "$verify_index" == 100755\ * ]] \
+  || fail "gateway/verify.sh must be executable in the git index (mode 100755)"
+printf 'OK: gateway/verify.sh is executable in the git index\n'
+
 PYTHON_BIN=""
 for candidate in python3 python; do
   if command -v "$candidate" >/dev/null 2>&1 \
@@ -114,6 +119,10 @@ try:
     )
     litellm_environment = services["litellm"].get("environment", {})
     check("LITELLM_SALT_KEY" in litellm_environment, "litellm must pass through LITELLM_SALT_KEY")
+    check(
+        services["litellm"].get("ports") == ["${LITELLM_BIND_HOST:-127.0.0.1}:4000:4000"],
+        "litellm must bind port 4000 to localhost by default",
+    )
     env_files = services["litellm"].get("env_file")
     check(
         isinstance(env_files, list)

@@ -2,7 +2,7 @@ services:
   litellm:
     image: ghcr.io/berriai/litellm:v1.92.0
     ports:
-      - "4000:4000"
+      - "${LITELLM_BIND_HOST:-127.0.0.1}:4000:4000"
     env_file:
       - path: .env
         required: false

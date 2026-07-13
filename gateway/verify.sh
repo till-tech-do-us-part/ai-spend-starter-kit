@@ -22,6 +22,25 @@ if [[ -z "$MASTER_KEY" && -f "$SCRIPT_DIR/.env" ]]; then
 fi
 [[ -n "$MASTER_KEY" ]] || fail "Key-generate failure — set LITELLM_MASTER_KEY; see the 'Key-generate failure' troubleshooting row"
 
+READY_TIMEOUT_SECONDS=${LITELLM_READY_TIMEOUT_SECONDS:-120}
+case "$READY_TIMEOUT_SECONDS" in
+  ''|*[!0-9]*) fail "LITELLM_READY_TIMEOUT_SECONDS must be a positive integer" ;;
+esac
+[[ "$READY_TIMEOUT_SECONDS" -gt 0 ]] || fail "LITELLM_READY_TIMEOUT_SECONDS must be a positive integer"
+
+printf 'Waiting for gateway liveliness at %s (timeout: %ss)' "$BASE_URL" "$READY_TIMEOUT_SECONDS"
+ready_deadline=$((SECONDS + READY_TIMEOUT_SECONDS))
+until curl --fail --silent --output /dev/null --connect-timeout 2 --max-time 5 \
+  "$BASE_URL/health/liveliness"; do
+  if (( SECONDS >= ready_deadline )); then
+    printf '\n' >&2
+    fail "Gateway did not become live within ${READY_TIMEOUT_SECONDS}s — run docker compose ps and docker compose logs litellm"
+  fi
+  printf '.'
+  sleep 2
+done
+printf ' ready\n'
+
 TMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TMP_DIR"' EXIT
 
@@ -78,7 +97,8 @@ fi
 cache_hit=false
 while IFS= read -r header; do
   header=${header%$'\r'}
-  if [[ "${header,,}" == x-litellm-cache-key:* ]]; then
+  lower_header=$(printf '%s' "$header" | tr '[:upper:]' '[:lower:]')
+  if [[ "$lower_header" == x-litellm-cache-key:* ]]; then
     cache_hit=true
     break
   fi
@@ -87,4 +107,4 @@ done < "$TMP_DIR/cache-headers.txt"
 printf '3/3 cache hit — that one was free\n'
 
 printf '\nDashboard: http://localhost:4000/ui\n'
-printf "Log in with UI_USERNAME/UI_PASSWORD — the three requests are attributed to key 'verify-script'.\n"
+printf "Log in as admin with LITELLM_MASTER_KEY (or your optional UI overrides) — the three requests are attributed to key 'verify-script'.\n"

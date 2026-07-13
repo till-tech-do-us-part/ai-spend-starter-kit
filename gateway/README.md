@@ -19,9 +19,10 @@ Postgres and Redis use named Docker volumes, so their data survives ordinary con
 ## Prerequisites
 
 - Docker with the Compose plugin
+- `curl`
 - A Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey)
 
-Anthropic and OpenAI keys are optional. The quickstart uses Gemini for `default`, `default-fallback`, and `planning`.
+The required environment values are `POSTGRES_PASSWORD`, `LITELLM_MASTER_KEY`, `LITELLM_SALT_KEY`, and `GEMINI_API_KEY`. Everything else, including Anthropic and OpenAI keys, is optional. The quickstart uses Gemini for `default`, `default-fallback`, and `planning`.
 
 ## Setup
 
@@ -32,11 +33,13 @@ Anthropic and OpenAI keys are optional. The quickstart uses Gemini for `default`
    cp .env.example .env
    ```
 
-2. Replace every `REPLACE-ME` value. Generate a random `LITELLM_MASTER_KEY` beginning with `sk-`, a strong `POSTGRES_PASSWORD`, and a long random `LITELLM_SALT_KEY`. A password manager is enough; `openssl rand -hex 32` is another option.
+2. Replace the four required `REPLACE-ME` values. Generate a random `LITELLM_MASTER_KEY` beginning with `sk-` and a long random `LITELLM_SALT_KEY`. Generate the database password with `openssl rand -hex 16`; keep it hex-only because Compose interpolates it into a connection string.
 
    `LITELLM_SALT_KEY` encrypts stored credentials in Postgres. Generate it once and **never change it after first boot**, or existing encrypted keys will become unreadable.
 
-   Set `UI_USERNAME` and `UI_PASSWORD` for the dashboard. They are not the master key. Add the required `GEMINI_API_KEY`; leave optional provider values as documented until you activate those routes.
+   Add the required `GEMINI_API_KEY`. Leave optional provider values empty until you activate those routes. Dashboard login defaults to `admin` and `LITELLM_MASTER_KEY`; uncomment both UI overrides if you want separate credentials.
+
+   Port 4000 binds to localhost by default. To reach the gateway over a tailnet or VPN, set `LITELLM_BIND_HOST` to that private host address before starting the stack. Never bind it to a public interface.
 
 3. Start the stack and check its status.
 
@@ -55,7 +58,7 @@ The script creates a virtual key named `verify-script`, calls the cheap and plan
 
 ## Dashboard tour
 
-Open [http://localhost:4000/ui](http://localhost:4000/ui). Log in with `UI_USERNAME` and `UI_PASSWORD`. `LITELLM_MASTER_KEY` is for API administration, not UI login.
+Open [http://localhost:4000/ui](http://localhost:4000/ui). By default, log in as `admin` with `LITELLM_MASTER_KEY`. If you set the optional overrides, use `UI_USERNAME` and `UI_PASSWORD` instead.
 
 Start with the Keys page:
 
@@ -87,14 +90,16 @@ Subscription-based assistants such as Claude Max and ChatGPT plans cannot route 
 
 ## Updating models
 
-Edit [`config.yaml`](config.yaml), keeping the public tier names stable. Then restart only LiteLLM:
+Edit [`config.yaml`](config.yaml), keeping the public tier names stable. Because that file is bind-mounted, restart only LiteLLM:
 
 ```bash
 docker compose restart litellm
 ```
 
+Use `restart` only for `config.yaml` edits. After any `.env` edit, run `docker compose up -d litellm` so Compose recreates the container with the new values.
+
 Check current provider names before an update. Exact model IDs age faster than the job tiers.
 
 ## Activating `review`
 
-Add a real `ANTHROPIC_API_KEY` to `.env`, then restart LiteLLM. Calls using `model: review` will go to Claude Sonnet 5, a different family from the Gemini writer routes.
+Add a real `ANTHROPIC_API_KEY` to `.env`, then run `docker compose up -d litellm`. Compose recreates the container and loads the new value. Calls using `model: review` will go to Claude Sonnet 5, a different family from the Gemini writer routes.
