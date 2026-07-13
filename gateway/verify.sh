@@ -22,7 +22,7 @@ if [[ -z "$MASTER_KEY" && -f "$SCRIPT_DIR/.env" ]]; then
 fi
 [[ -n "$MASTER_KEY" ]] || fail "Key-generate failure — set LITELLM_MASTER_KEY; see the 'Key-generate failure' troubleshooting row"
 case "$MASTER_KEY" in
-  *'$'*|*"'"*|*'"'*|*' '*|*'\'*)
+  *'$'*|*"'"*|*'"'*|*' '*|*"\\"*)
     fail 'Invalid LITELLM_MASTER_KEY — Compose interpolates $ in unquoted .env values; regenerate as hex, see .env.example'
     ;;
 esac
