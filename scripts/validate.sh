@@ -226,7 +226,10 @@ else
 fi
 
 if command -v shellcheck >/dev/null 2>&1; then
-  mapfile -d '' scripts_to_check < <(find . -type f -name '*.sh' -print0)
+  scripts_to_check=()
+  while IFS= read -r -d '' script; do
+    scripts_to_check[${#scripts_to_check[@]}]="$script"
+  done < <(find . -type f -name '*.sh' -print0)
   shellcheck "${scripts_to_check[@]}" || fail "shellcheck failed"
   printf 'OK: shellcheck passed\n'
 else

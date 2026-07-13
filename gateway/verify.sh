@@ -21,6 +21,11 @@ if [[ -z "$MASTER_KEY" && -f "$SCRIPT_DIR/.env" ]]; then
   done < "$SCRIPT_DIR/.env"
 fi
 [[ -n "$MASTER_KEY" ]] || fail "Key-generate failure — set LITELLM_MASTER_KEY; see the 'Key-generate failure' troubleshooting row"
+case "$MASTER_KEY" in
+  *'$'*|*"'"*|*'"'*|*' '*|*'\'*)
+    fail 'Invalid LITELLM_MASTER_KEY — Compose interpolates $ in unquoted .env values; regenerate as hex, see .env.example'
+    ;;
+esac
 
 READY_TIMEOUT_SECONDS=${LITELLM_READY_TIMEOUT_SECONDS:-120}
 case "$READY_TIMEOUT_SECONDS" in
@@ -106,5 +111,5 @@ done < "$TMP_DIR/cache-headers.txt"
 [[ "$cache_hit" == true ]] || fail "No cache hit on verify step 3 — x-litellm-cache-key was absent; see the 'No cache hit on verify step 3' troubleshooting row"
 printf '3/3 cache hit — that one was free\n'
 
-printf '\nDashboard: http://localhost:4000/ui\n'
+printf '\nDashboard: %s/ui\n' "$BASE_URL"
 printf "Log in as admin with LITELLM_MASTER_KEY (or your optional UI overrides) — the three requests are attributed to key 'verify-script'.\n"

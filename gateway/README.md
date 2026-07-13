@@ -19,7 +19,7 @@ Postgres and Redis use named Docker volumes, so their data survives ordinary con
 ## Prerequisites
 
 - Docker with the Compose plugin
-- `curl`
+- `curl` and `openssl`
 - A Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey)
 
 The required environment values are `POSTGRES_PASSWORD`, `LITELLM_MASTER_KEY`, `LITELLM_SALT_KEY`, and `GEMINI_API_KEY`. Everything else, including Anthropic and OpenAI keys, is optional. The quickstart uses Gemini for `default`, `default-fallback`, and `planning`.
@@ -33,13 +33,21 @@ The required environment values are `POSTGRES_PASSWORD`, `LITELLM_MASTER_KEY`, `
    cp .env.example .env
    ```
 
-2. Replace the four required `REPLACE-ME` values. Generate a random `LITELLM_MASTER_KEY` beginning with `sk-` and a long random `LITELLM_SALT_KEY`. Generate the database password with `openssl rand -hex 16`; keep it hex-only because Compose interpolates it into a connection string.
+2. Replace the four required `REPLACE-ME` values. Generate the three secrets with these commands, then copy their outputs into `.env`:
+
+   ```bash
+   echo "sk-$(openssl rand -hex 24)"       # LITELLM_MASTER_KEY
+   echo "sk-salt-$(openssl rand -hex 24)"  # LITELLM_SALT_KEY
+   openssl rand -hex 16                    # POSTGRES_PASSWORD
+   ```
+
+   Keep the random portion of all three generated secrets hex-only. The full values must contain no `$`, quotes, or spaces because Compose interpolates unquoted `.env` values.
 
    `LITELLM_SALT_KEY` encrypts stored credentials in Postgres. Generate it once and **never change it after first boot**, or existing encrypted keys will become unreadable.
 
    Add the required `GEMINI_API_KEY`. Leave optional provider values empty until you activate those routes. Dashboard login defaults to `admin` and `LITELLM_MASTER_KEY`; uncomment both UI overrides if you want separate credentials.
 
-   Port 4000 binds to localhost by default. To reach the gateway over a tailnet or VPN, set `LITELLM_BIND_HOST` to that private host address before starting the stack. Never bind it to a public interface.
+   Port 4000 binds to localhost by default. To reach the gateway over a tailnet or VPN, set `LITELLM_BIND_HOST` to that private host address before starting the stack. When you override the bind host, also pass the matching base URL to the script: `LITELLM_BASE_URL=http://<that-host>:4000 ./verify.sh`. Never bind it to a public interface.
 
 3. Start the stack and check its status.
 
@@ -96,7 +104,9 @@ Edit [`config.yaml`](config.yaml), keeping the public tier names stable. Because
 docker compose restart litellm
 ```
 
-Use `restart` only for `config.yaml` edits. After any `.env` edit, run `docker compose up -d litellm` so Compose recreates the container with the new values.
+Use `restart` only for `config.yaml` edits. After any `.env` edit other than `POSTGRES_PASSWORD`, run `docker compose up -d litellm` so Compose recreates the container with the new values.
+
+Changing `POSTGRES_PASSWORD` after first boot requires resetting the database volume with `docker compose down -v`, which **DESTROYS spend history**, so generate it once and keep it.
 
 Check current provider names before an update. Exact model IDs age faster than the job tiers.
 

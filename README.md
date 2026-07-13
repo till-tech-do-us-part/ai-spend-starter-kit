@@ -18,6 +18,8 @@ The core idea is small: name the job, not the model. Routine work goes to `defau
 
 ## Quickstart
 
+You need Docker with the Compose plugin, `curl`, `openssl`, and a Gemini API key.
+
 1. Clone the repository and enter the gateway directory.
 
    ```bash
@@ -29,9 +31,13 @@ The core idea is small: name the job, not the model. Routine work goes to `defau
 
    ```bash
    cp .env.example .env
-   openssl rand -hex 16  # Copy this URL-safe value to POSTGRES_PASSWORD.
+   echo "sk-$(openssl rand -hex 24)"       # LITELLM_MASTER_KEY
+   echo "sk-salt-$(openssl rand -hex 24)"  # LITELLM_SALT_KEY
+   openssl rand -hex 16                    # POSTGRES_PASSWORD
    # Edit .env. Replace the four required REPLACE-ME values.
    ```
+
+   Copy the three command outputs into `.env`. Keep the random portion of all three generated secrets hex-only. The full values must contain no `$`, quotes, or spaces because Compose interpolates unquoted `.env` values.
 
 3. Start the three containers.
 
