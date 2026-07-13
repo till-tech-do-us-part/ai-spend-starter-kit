@@ -22,7 +22,7 @@ Postgres and Redis use named Docker volumes, so their data survives ordinary con
 - `curl` and `openssl`
 - A Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey)
 
-The required environment values are `POSTGRES_PASSWORD`, `LITELLM_MASTER_KEY`, `LITELLM_SALT_KEY`, and `GEMINI_API_KEY`. Everything else, including Anthropic and OpenAI keys, is optional. The quickstart uses Gemini for `default`, `default-fallback`, and `planning`.
+The required environment values are `POSTGRES_PASSWORD`, `LITELLM_MASTER_KEY`, `LITELLM_SALT_KEY`, and `GEMINI_API_KEY`. Gemini powers `default`, `default-fallback`, `planning`, and `review`. Optional provider keys exist only for the opt-in cross-provider review recipe.
 
 ## Setup
 
@@ -45,7 +45,7 @@ The required environment values are `POSTGRES_PASSWORD`, `LITELLM_MASTER_KEY`, `
 
    `LITELLM_SALT_KEY` encrypts stored credentials in Postgres. Generate it once and **never change it after first boot**, or existing encrypted keys will become unreadable.
 
-   Add the required `GEMINI_API_KEY`. Leave optional provider values empty until you activate those routes. Dashboard login defaults to `admin` and `LITELLM_MASTER_KEY`; uncomment both UI overrides if you want separate credentials.
+   Add the required `GEMINI_API_KEY`. Leave the optional cross-provider key examples commented unless you use that review recipe. Dashboard login defaults to `admin` and `LITELLM_MASTER_KEY`; uncomment both UI overrides if you want separate credentials.
 
    Port 4000 binds to localhost by default. To reach the gateway over a tailnet or VPN, set `LITELLM_BIND_HOST` to that private host address before starting the stack. When you override the bind host, also pass the matching base URL to the script: `LITELLM_BASE_URL=http://<that-host>:4000 ./verify.sh`. Never bind it to a public interface.
 
@@ -110,6 +110,8 @@ Changing `POSTGRES_PASSWORD` after first boot requires resetting the database vo
 
 Check current provider names before an update. Exact model IDs age faster than the job tiers.
 
-## Activating `review`
+## Optional: cross-provider review (model diversity)
 
-Add a real `ANTHROPIC_API_KEY` to `.env`, then run `docker compose up -d litellm`. Compose recreates the container and loads the new value. Calls using `model: review` will go to Claude Sonnet 5, a different family from the Gemini writer routes.
+`review` is active by default on the good Gemini model and needs no additional provider key.
+
+For budget-approved model diversity, replace the active `review` entry in `config.yaml` with one of the commented cross-provider recipes, uncomment and set that provider's key in `.env`, then run `docker compose up -d litellm`. This costs extra. Gemini stays the default provider; do not make the second provider your default. The recipe is not Anthropic-by-default, and Anthropic is listed last because it is typically the most expensive.
