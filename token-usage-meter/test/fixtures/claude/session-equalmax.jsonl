@@ -1,0 +1,2 @@
+{"type":"assistant","timestamp":"2026-07-14T00:00:01Z","sessionId":"equal","cwd":"/work/later-project","message":{"id":"equal-1","model":"claude-opus-4-8","usage":{"input_tokens":10,"output_tokens":10,"cache_read_input_tokens":0,"cache_creation_input_tokens":0}}}
+{"type":"assistant","timestamp":"2026-07-13T23:59:59Z","sessionId":"equal","cwd":"C:\\work\\earlier-project","message":{"id":"equal-1","model":"claude-opus-4-8","usage":{"input_tokens":10,"output_tokens":10,"cache_read_input_tokens":0,"cache_creation_input_tokens":0}}}

@@ -1,6 +1,6 @@
 # Keep AI spend flat while usage grows — a starter kit for teams without a platform team.
 
-Stand up a working AI gateway in an afternoon. You do not need a platform team to run it. The stack and the token-efficiency practices are free and open source.
+See and reduce token waste in the two places tokens burn: API requests for teams, and subscription CLI limits for individual engineers. Stand up the gateway in an afternoon, or run the local token meter without Docker. You do not need a platform team to use either path. The stack and the token-efficiency practices are free and open source.
 
 This kit operationalizes five cost levers described by Brian Armstrong; it does not reproduce his post.
 
@@ -11,10 +11,12 @@ This kit operationalizes five cost levers described by Brian Armstrong; it does 
 | Cheaper defaults | [`gateway/config.yaml`](gateway/config.yaml) — the `default` tier |
 | Smart routing | [`gateway/config.yaml`](gateway/config.yaml) — named job tiers and fallbacks |
 | Prompt caching | Redis in [`gateway/docker-compose.yml`](gateway/docker-compose.yml) plus the caching block in `config.yaml` |
-| Lean context | [`guide/lean-context.md`](guide/lean-context.md) plus [`skill/token-efficiency/`](skill/token-efficiency/) |
-| Spend visibility | Gateway dashboard and per-engineer keys in the [`gateway/README.md`](gateway/README.md) tour |
+| Lean context | [`guide/lean-context.md`](guide/lean-context.md), [`skill/token-efficiency/`](skill/token-efficiency/), and subscription-log waste flags from [`token-usage-meter/`](token-usage-meter/) |
+| Spend visibility | Gateway dashboard and per-engineer keys in the [`gateway/README.md`](gateway/README.md) tour; local Claude Code and Codex rollups from [`token-usage-meter/`](token-usage-meter/) |
 
 The core idea is small: name the job, not the model. Routine work goes to `default`; architecture and hard debugging go to `planning`; independent checks go to `review`.
+
+Use [`gateway/`](gateway/) for organization API spend. Use [`token-usage-meter/`](token-usage-meter/) for the subscription CLI usage that never passes through a gateway.
 
 ## Quickstart
 

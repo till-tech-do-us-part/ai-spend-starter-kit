@@ -1,0 +1,17 @@
+{
+  "name": "token-usage-meter",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": { "token-usage-meter": "dist/cli.js" },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "build:test": "tsc -p tsconfig.test.json",
+    "test": "npm run build && npm run build:test && node --test dist-test/test",
+    "typecheck": "tsc -p tsconfig.build.json --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
