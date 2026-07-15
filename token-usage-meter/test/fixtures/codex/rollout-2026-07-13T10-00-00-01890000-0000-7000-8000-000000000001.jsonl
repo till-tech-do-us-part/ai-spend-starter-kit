@@ -1,0 +1,5 @@
+{"type":"session_meta","timestamp":"2026-07-13T10:00:00Z","payload":{"id":"01890000-0000-7000-8000-000000000001","session_id":"codex-one","cwd":"/work/codex-one","base_instructions":"FIXTURE_SENTINEL_PROMPT_DO_NOT_RENDER"}}
+{"type":"turn_context","timestamp":"2026-07-13T10:00:01Z","payload":{"turn_id":"turn-1","model":"gpt-5.1-codex","cwd":"/work/codex-one","effort":"high"}}
+{"type":"event_msg","timestamp":"2026-07-13T10:00:02Z","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":150,"cached_input_tokens":50,"output_tokens":20},"last_token_usage":{"input_tokens":150,"cached_input_tokens":50,"output_tokens":20,"reasoning_output_tokens":7}}}}
+{"type":"event_msg","timestamp":"2026-07-13T09:59:59Z","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":150,"cached_input_tokens":50,"output_tokens":20},"last_token_usage":{"input_tokens":150,"cached_input_tokens":50,"output_tokens":20}}}}
+{"type":"event_msg","timestamp":"2026-07-13T10:00:04Z","payload":{"type":"token_count","info":null}}
