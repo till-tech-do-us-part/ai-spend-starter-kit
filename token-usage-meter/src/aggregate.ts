@@ -2,6 +2,7 @@ import { defaults, tierFor, type MeterConfig } from "./config.js";
 import type { Bucket, Rollups, TokenSums, UsageEvent } from "./types.js";
 
 const zero = (): Bucket => ({ inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheCreationTokens: 0, totalTokens: 0, turnCount: 0 });
+const dictionary = <T>(): Record<string, T> => Object.create(null) as Record<string, T>;
 const add = (bucket: Bucket, event: UsageEvent): void => { for (const k of ["inputTokens","outputTokens","cacheReadTokens","cacheCreationTokens"] as const) bucket[k] += event[k]; bucket.totalTokens += event.inputTokens + event.outputTokens + event.cacheReadTokens + event.cacheCreationTokens; bucket.turnCount++; };
 const median = (values: number[]): number => { const v = [...values].sort((a,b)=>a-b), n=v.length; return n ? n%2 ? v[(n-1)/2]! : (v[n/2-1]!+v[n/2]!)/2 : 0; };
 export function parseSince(value: string, now = new Date()): number | null {
@@ -12,14 +13,14 @@ export function parseSince(value: string, now = new Date()): number | null {
 export function aggregate(input: UsageEvent[], options: { since?: string; now?: Date; config?: MeterConfig } = {}): Rollups {
   const now = options.now ?? new Date(), cutoff = parseSince(options.since ?? "all", now), config = options.config ?? defaults;
   const events = input.filter(e => { const t=Date.parse(e.timestamp); return Number.isFinite(t) && t <= now.getTime() && (cutoff === null || t >= cutoff); });
-  const byDay: Record<string,Bucket>={}, byProject: Record<string,Bucket>={}, byModel: Record<string,Bucket>={};
+  const byDay = dictionary<Bucket>(), byProject = dictionary<Bucket>(), byModel = dictionary<Bucket>();
   const sessions = new Map<string, UsageEvent[]>(); const total=zero();
   for (const event of events) {
     add(total,event); const day=new Date(event.timestamp).toISOString().slice(0,10);
     for (const [map,key] of [[byDay,day],[byProject,event.project],[byModel,event.model]] as const) add(map[key] ??= zero(),event);
     const key=`${event.source}|${event.sessionId}`; const list=sessions.get(key)??[]; list.push(event); sessions.set(key,list);
   }
-  const bySession: Rollups["bySession"]={};
+  const bySession = dictionary<Rollups["bySession"][string]>();
   for (const [key,list] of sessions) {
     list.sort((a,b)=>a.timestamp.localeCompare(b.timestamp)); const bucket=zero(); const perTier={frontier:0,cheap:0,other:0};
     for (const event of list) { add(bucket,event); perTier[tierFor(event.model,config)] += event.inputTokens+event.outputTokens+event.cacheReadTokens+event.cacheCreationTokens; }
